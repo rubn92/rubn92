@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReportPro — Generador de Reportes</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #6C63FF;
+      --primary-dark: #5a52d5;
+      --bg: #F4F6FB;
+      --white: #ffffff;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px;
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .logo {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 32px;
+      padding: 0 8px;
+    }
+    .logo span { color: var(--text); }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--muted);
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: #f0eeff;
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* ── Main ── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      padding: 32px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Header ── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .page-title { font-size: 1.6rem; font-weight: 700; }
+    .page-subtitle { font-size: 0.9rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline {
+      background: white;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+    }
+    .btn-outline:hover { background: #f0eeff; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+    .btn-success { background: var(--success); color: white; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 20px;
+    }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── Client list ── */
+    .client-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .client-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .client-card:hover {
+      box-shadow: 0 4px 16px rgba(108,99,255,0.12);
+      transform: translateY(-2px);
+    }
+    .client-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+    .client-sector { font-size: 0.82rem; color: var(--muted); }
+    .client-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: white;
+      margin-bottom: 12px;
+    }
+
+    /* ── Form ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    input, select, textarea {
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: var(--bg);
+      color: var(--text);
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: white;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .metrics-section {
+      background: #f8f7ff;
+      border: 1.5px solid #e0dcff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 8px;
+    }
+    .metrics-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .modal-title { font-size: 1.2rem; font-weight: 700; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    /* ── Badge ── */
+    .badge {
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-purple { background: #ede9fe; color: #5b21b6; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--text);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: var(--success); }
+
+    /* ── Report preview ── */
+    .report-preview {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .report-header-bar {
+      background: var(--primary);
+      color: white;
+      padding: 24px 28px;
+    }
+    .report-header-bar h2 { font-size: 1.3rem; }
+    .report-header-bar p { opacity: 0.8; font-size: 0.85rem; margin-top: 4px; }
+
+    .report-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+    }
+    .report-metric {
+      background: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .report-metric-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+    .report-metric-label { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    .report-body { padding: 24px 28px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+    .empty-state svg { width: 48px; height: 48px; margin: 0 auto 16px; opacity: 0.3; }
+    .empty-state h3 { font-size: 1rem; color: var(--text); margin-bottom: 8px; }
+    .empty-state p { font-size: 0.85rem; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .report-metrics { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="logo">Report<span>Pro</span></div>
+
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('clients')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+      Clientes
+    </div>
+    <div class="nav-item" onclick="showPage('new-report')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Nuevo Reporte
+    </div>
+    <div class="nav-item" onclick="showPage('reports')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Reportes
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle">Resumen general de tu agencia</div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('new-report')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Nuevo Reporte
+        </button>
+      </div>
+
+      <div class="stats-grid" id="dashboard-stats"></div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Últimos reportes
+        </div>
+        <div id="recent-reports"></div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div id="page-clients" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Clientes</div>
+          <div class="page-subtitle">Gestiona tu cartera de clientes</div>
+        </div>
+        <button class="btn btn-primary" onclick="openClientModal()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Añadir cliente
+        </button>
+      </div>
+      <div id="client-grid" class="client-grid"></div>
+    </div>
+
+    <!-- NEW REPORT -->
+    <div id="page-new-report" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Nuevo Reporte</div>
+          <div class="page-subtitle">Genera un informe profesional para tu cliente</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Información del reporte</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Cliente</label>
+            <select id="report-client">
+              <option value="">— Selecciona un cliente —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Período</label>
+            <input type="month" id="report-period" />
+          </div>
+          <div class="form-group full">
+            <label>Resumen ejecutivo</label>
+            <textarea id="report-summary" placeholder="Escribe un resumen del mes: logros, novedades, próximos pasos..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Métricas de Redes Sociales
+        </div>
+
+        <div class="metrics-section">
+          <div class="metrics-title">📘 Instagram</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Seguidores totales</label><input type="number" id="ig-followers" placeholder="0" /></div>
+            <div class="form-group"><label>Nuevos seguidores</label><input type="number" id="ig-new-followers" placeholder="0" /></div>
+            <div class="form-group"><label>Alcance total</label><input type="number" id="ig-reach" placeholder="0" /></div>
+            <div class="form-group"><label>Impresiones</label><input type="number" id="ig-impressions" placeholder="0" /></div>
+            <div class="form-group"><label>Interacciones</label><input type="number" id="ig-engagement" placeholder="0" /></div>
+            <div class="form-group"><label>Posts publicados</label><input type="number" id="ig-posts" placeholder="0" /></div>
+          </div>
+        </div>
+
+        <br />
+
+        <div class="metrics-section">
+          <div class="metrics-title">💼 LinkedIn</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Seguidores totales</label><input type="number" id="li-followers" placeholder="0" /></div>
+            <div class="form-group"><label>Nuevos seguidores</label><input type="number" id="li-new-followers" placeholder="0" /></div>
+            <div class="form-group"><label>Impresiones</label><input type="number" id="li-impressions" placeholder="0" /></div>
+            <div class="form-group"><label>Interacciones</label><input type="number" id="li-engagement" placeholder="0" /></div>
+          </div>
+        </div>
+
+        <br />
+
+        <div class="metrics-section">
+          <div class="metrics-title">🌐 Sitio Web (Google Analytics)</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Sesiones</label><input type="number" id="web-sessions" placeholder="0" /></div>
+            <div class="form-group"><label>Usuarios únicos</label><input type="number" id="web-users" placeholder="0" /></div>
+            <div class="form-group"><label>Tasa de rebote (%)</label><input type="number" id="web-bounce" placeholder="0" /></div>
+            <div class="form-group"><label>Duración media (seg)</label><input type="number" id="web-duration" placeholder="0" /></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Logros y próximos pasos</div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Logros del mes (uno por línea)</label>
+            <textarea id="report-achievements" placeholder="Lanzamiento de campaña de verano&#10;Aumento del 15% en alcance&#10;Publicación viral con 5k impresiones"></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Próximos pasos (uno por línea)</label>
+            <textarea id="report-next" placeholder="Preparar contenido para Septiembre&#10;Activar campaña de Google Ads&#10;Revisar estrategia de hashtags"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="previewReport()">Vista previa</button>
+        <button class="btn btn-primary" onclick="generatePDF()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Descargar PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- REPORTS LIST -->
+    <div id="page-reports" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Reportes</div>
+          <div class="page-subtitle">Historial de todos tus informes</div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('new-report')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Nuevo Reporte
+        </button>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Período</th>
+              <th>Creado</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="reports-table"></tbody>
+        </table>
+        <div id="reports-empty" class="empty-state" style="display:none">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <h3>Aún no hay reportes</h3>
+          <p>Crea tu primer reporte desde "Nuevo Reporte"</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="modal-overlay" id="client-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="client-modal-title">Añadir cliente</div>
+      <button class="modal-close" onclick="closeClientModal()">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>Nombre / Empresa *</label><input id="c-name" placeholder="Ej: Clínica Dental López" /></div>
+      <div class="form-group"><label>Sector</label><input id="c-sector" placeholder="Ej: Salud, Restauración..." /></div>
+      <div class="form-group"><label>Contacto</label><input id="c-contact" placeholder="Nombre del responsable" /></div>
+      <div class="form-group"><label>Email</label><input id="c-email" type="email" placeholder="contacto@empresa.com" /></div>
+      <div class="form-group full"><label>Notas</label><textarea id="c-notes" placeholder="Objetivos, preferencias, contexto..."></textarea></div>
+    </div>
+    <input type="hidden" id="c-editing-id" />
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+      <button class="btn btn-outline" onclick="closeClientModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClient()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PREVIEW -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <div class="modal-title">Vista previa del reporte</div>
+      <button class="modal-close" onclick="closePreview()">×</button>
+    </div>
+    <div id="preview-content"></div>
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+      <button class="btn btn-outline" onclick="closePreview()">Cerrar</button>
+      <button class="btn btn-primary" onclick="generatePDF()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Descargar PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATE ──
+  let clients = JSON.parse(localStorage.getItem('rp_clients') || '[]');
+  let reports = JSON.parse(localStorage.getItem('rp_reports') || '[]');
+
+  const COLORS = ['#6C63FF','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899'];
+  function getColor(name) {
+    let n = 0;
+    for (let c of name) n += c.charCodeAt(0);
+    return COLORS[n % COLORS.length];
+  }
+  function initials(name) {
+    return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  }
+  function save() {
+    localStorage.setItem('rp_clients', JSON.stringify(clients));
+    localStorage.setItem('rp_reports', JSON.stringify(reports));
+  }
+  function toast(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type ? ' '+type : '');
+    setTimeout(() => t.className = 'toast', 2800);
+  }
+  function fmt(n) { return Number(n||0).toLocaleString('es-ES'); }
+  function fmtPeriod(p) {
+    if (!p) return '';
+    const [y,m] = p.split('-');
+    const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    return months[parseInt(m)-1] + ' ' + y;
+  }
+
+  // ── NAVIGATION ──
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    const navMap = {dashboard:0, clients:1, 'new-report':2, reports:3};
+    document.querySelectorAll('.nav-item')[navMap[id]]?.classList.add('active');
+    if (id === 'dashboard') renderDashboard();
+    if (id === 'clients') renderClients();
+    if (id === 'reports') renderReports();
+    if (id === 'new-report') populateClientSelect();
+  }
+
+  // ── DASHBOARD ──
+  function renderDashboard() {
+    const stats = document.getElementById('dashboard-stats');
+    stats.innerHTML = `
+      <div class="stat-card"><div class="stat-value">${clients.length}</div><div class="stat-label">Clientes activos</div></div>
+      <div class="stat-card"><div class="stat-value">${reports.length}</div><div class="stat-label">Reportes generados</div></div>
+      <div class="stat-card"><div class="stat-value">${reports.filter(r=>r.date && r.date.startsWith(new Date().toISOString().slice(0,7))).length}</div><div class="stat-label">Reportes este mes</div></div>
+      <div class="stat-card"><div class="stat-value">${clients.length > 0 ? Math.round(reports.length/clients.length*10)/10 : 0}</div><div class="stat-label">Reportes por cliente</div></div>
+    `;
+    const recent = document.getElementById('recent-reports');
+    const last5 = [...reports].reverse().slice(0,5);
+    if (!last5.length) {
+      recent.innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><h3>Sin reportes aún</h3><p>Crea tu primer reporte</p></div>`;
+      return;
+    }
+    recent.innerHTML = `<table><thead><tr><th>Cliente</th><th>Período</th><th>Fecha</th><th></th></tr></thead><tbody>`
+      + last5.map(r => {
+        const client = clients.find(c=>c.id===r.clientId);
+        return `<tr>
+          <td><strong>${client?.name||'—'}</strong></td>
+          <td>${fmtPeriod(r.period)}</td>
+          <td>${new Date(r.date).toLocaleDateString('es-ES')}</td>
+          <td><button class="btn btn-sm btn-outline" onclick="downloadReport('${r.id}')">PDF</button></td>
+        </tr>`;
+      }).join('') + `</tbody></table>`;
+  }
+
+  // ── CLIENTS ──
+  function renderClients() {
+    const grid = document.getElementById('client-grid');
+    if (!clients.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg><h3>Sin clientes aún</h3><p>Añade tu primer cliente para empezar</p></div>`;
+      return;
+    }
+    grid.innerHTML = clients.map(c => `
+      <div class="client-card">
+        <div class="avatar" style="background:${getColor(c.name)}">${initials(c.name)}</div>
+        <div class="client-name">${c.name}</div>
+        <div class="client-sector">${c.sector || 'Sin sector'} ${c.contact ? '· '+c.contact : ''}</div>
+        <div class="client-actions">
+          <button class="btn btn-sm btn-primary" onclick="newReportFor('${c.id}')">+ Reporte</button>
+          <button class="btn btn-sm btn-outline" onclick="editClient('${c.id}')">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteClient('${c.id}')">Eliminar</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openClientModal(id) {
+    document.getElementById('c-name').value = '';
+    document.getElementById('c-sector').value = '';
+    document.getElementById('c-contact').value = '';
+    document.getElementById('c-email').value = '';
+    document.getElementById('c-notes').value = '';
+    document.getElementById('c-editing-id').value = '';
+    document.getElementById('client-modal-title').textContent = 'Añadir cliente';
+    document.getElementById('client-modal').classList.add('open');
+  }
+  function closeClientModal() {
+    document.getElementById('client-modal').classList.remove('open');
+  }
+  function editClient(id) {
+    const c = clients.find(x=>x.id===id);
+    if (!c) return;
+    document.getElementById('c-name').value = c.name;
+    document.getElementById('c-sector').value = c.sector||'';
+    document.getElementById('c-contact').value = c.contact||'';
+    document.getElementById('c-email').value = c.email||'';
+    document.getElementById('c-notes').value = c.notes||'';
+    document.getElementById('c-editing-id').value = id;
+    document.getElementById('client-modal-title').textContent = 'Editar cliente';
+    document.getElementById('client-modal').classList.add('open');
+  }
+  function saveClient() {
+    const name = document.getElementById('c-name').value.trim();
+    if (!name) { toast('El nombre es obligatorio'); return; }
+    const editingId = document.getElementById('c-editing-id').value;
+    const data = {
+      name,
+      sector: document.getElementById('c-sector').value.trim(),
+      contact: document.getElementById('c-contact').value.trim(),
+      email: document.getElementById('c-email').value.trim(),
+      notes: document.getElementById('c-notes').value.trim(),
+    };
+    if (editingId) {
+      const idx = clients.findIndex(c=>c.id===editingId);
+      clients[idx] = {...clients[idx], ...data};
+      toast('Cliente actualizado', 'success');
+    } else {
+      clients.push({...data, id: Date.now().toString()});
+      toast('Cliente añadido', 'success');
+    }
+    save(); closeClientModal(); renderClients();
+  }
+  function deleteClient(id) {
+    if (!confirm('¿Eliminar este cliente y sus reportes?')) return;
+    clients = clients.filter(c=>c.id!==id);
+    reports = reports.filter(r=>r.clientId!==id);
+    save(); renderClients(); toast('Cliente eliminado');
+  }
+  function newReportFor(id) {
+    showPage('new-report');
+    setTimeout(() => { document.getElementById('report-client').value = id; }, 100);
+  }
+
+  // ── REPORT FORM ──
+  function populateClientSelect() {
+    const sel = document.getElementById('report-client');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Selecciona un cliente —</option>'
+      + clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    if (current) sel.value = current;
+    // default period = current month
+    const now = new Date();
+    document.getElementById('report-period').value = now.toISOString().slice(0,7);
+  }
+
+  function getFormData() {
+    return {
+      clientId: document.getElementById('report-client').value,
+      period: document.getElementById('report-period').value,
+      summary: document.getElementById('report-summary').value.trim(),
+      ig: {
+        followers: document.getElementById('ig-followers').value,
+        newFollowers: document.getElementById('ig-new-followers').value,
+        reach: document.getElementById('ig-reach').value,
+        impressions: document.getElementById('ig-impressions').value,
+        engagement: document.getElementById('ig-engagement').value,
+        posts: document.getElementById('ig-posts').value,
+      },
+      li: {
+        followers: document.getElementById('li-followers').value,
+        newFollowers: document.getElementById('li-new-followers').value,
+        impressions: document.getElementById('li-impressions').value,
+        engagement: document.getElementById('li-engagement').value,
+      },
+      web: {
+        sessions: document.getElementById('web-sessions').value,
+        users: document.getElementById('web-users').value,
+        bounce: document.getElementById('web-bounce').value,
+        duration: document.getElementById('web-duration').value,
+      },
+      achievements: document.getElementById('report-achievements').value.trim(),
+      next: document.getElementById('report-next').value.trim(),
+    };
+  }
+
+  function previewReport() {
+    const data = getFormData();
+    if (!data.clientId) { toast('Selecciona un cliente primero'); return; }
+    const client = clients.find(c=>c.id===data.clientId);
+    document.getElementById('preview-content').innerHTML = buildPreviewHTML(data, client);
+    document.getElementById('preview-modal').classList.add('open');
+  }
+  function closePreview() {
+    document.getElementById('preview-modal').classList.remove('open');
+  }
+
+  function buildPreviewHTML(data, client) {
+    const achieveList = data.achievements ? data.achievements.split('\n').filter(Boolean) : [];
+    const nextList = data.next ? data.next.split('\n').filter(Boolean) : [];
+    return `
+      <div class="report-preview">
+        <div class="report-header-bar">
+          <h2>${client.name}</h2>
+          <p>Reporte mensual · ${fmtPeriod(data.period)}</p>
+        </div>
+
+        ${(data.ig.followers||data.ig.reach||data.ig.impressions) ? `
+        <div style="padding:16px 24px 0; font-weight:700; font-size:0.85rem; color:#6C63FF;">📘 Instagram</div>
+        <div class="report-metrics">
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.ig.followers)}</div><div class="report-metric-label">Seguidores</div></div>
+          <div class="report-metric"><div class="report-metric-value">+${fmt(data.ig.newFollowers)}</div><div class="report-metric-label">Nuevos</div></div>
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.ig.reach)}</div><div class="report-metric-label">Alcance</div></div>
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.ig.impressions)}</div><div class="report-metric-label">Impresiones</div></div>
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.ig.engagement)}</div><div class="report-metric-label">Interacciones</div></div>
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.ig.posts)}</div><div class="report-metric-label">Posts</div></div>
+        </div>` : ''}
+
+        ${(data.li.followers||data.li.impressions) ? `
+        <div style="padding:16px 24px 0; font-weight:700; font-size:0.85rem; color:#6C63FF;">💼 LinkedIn</div>
+        <div class="report-metrics" style="grid-template-columns:repeat(4,1fr)">
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.li.followers)}</div><div class="report-metric-label">Seguidores</div></div>
+          <div class="report-metric"><div class="report-metric-value">+${fmt(data.li.newFollowers)}</div><div class="report-metric-label">Nuevos</div></div>
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.li.impressions)}</div><div class="report-metric-label">Impresiones</div></div>
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.li.engagement)}</div><div class="report-metric-label">Interacciones</div></div>
+        </div>` : ''}
+
+        ${(data.web.sessions||data.web.users) ? `
+        <div style="padding:16px 24px 0; font-weight:700; font-size:0.85rem; color:#6C63FF;">🌐 Web</div>
+        <div class="report-metrics" style="grid-template-columns:repeat(4,1fr)">
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.web.sessions)}</div><div class="report-metric-label">Sesiones</div></div>
+          <div class="report-metric"><div class="report-metric-value">${fmt(data.web.users)}</div><div class="report-metric-label">Usuarios únicos</div></div>
+          <div class="report-metric"><div class="report-metric-value">${data.web.bounce||0}%</div><div class="report-metric-label">Tasa rebote</div></div>
+          <div class="report-metric"><div class="report-metric-value">${data.web.duration||0}s</div><div class="report-metric-label">Duración media</div></div>
+        </div>` : ''}
+
+        <div class="report-body">
+          ${data.summary ? `<p style="font-size:0.9rem;color:#4b5563;margin-bottom:16px;">${data.summary}</p>` : ''}
+          ${achieveList.length ? `<div style="margin-bottom:12px"><strong style="font-size:0.85rem">✅ Logros del mes</strong><ul style="margin-top:8px;padding-left:16px;">${achieveList.map(a=>`<li style="font-size:0.85rem;margin-bottom:4px">${a}</li>`).join('')}</ul></div>` : ''}
+          ${nextList.length ? `<div><strong style="font-size:0.85rem">🔜 Próximos pasos</strong><ul style="margin-top:8px;padding-left:16px;">${nextList.map(n=>`<li style="font-size:0.85rem;margin-bottom:4px">${n}</li>`).join('')}</ul></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // ── PDF GENERATION ──
+  function generatePDF() {
+    const data = getFormData();
+    if (!data.clientId) { toast('Selecciona un cliente primero'); return; }
+    const client = clients.find(c=>c.id===data.clientId);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210; const H = 297;
+    let y = 0;
+
+    // Header block
+    doc.setFillColor(108, 99, 255);
+    doc.rect(0, 0, W, 40, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text(client.name, 16, 18);
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.text(`Reporte mensual · ${fmtPeriod(data.period)}`, 16, 28);
+    doc.setFontSize(8);
+    doc.text(`Generado el ${new Date().toLocaleDateString('es-ES')}`, 16, 35);
+    y = 50;
+
+    // Summary
+    if (data.summary) {
+      doc.setTextColor(80,80,80); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      const lines = doc.splitTextToSize(data.summary, W-32);
+      doc.text(lines, 16, y);
+      y += lines.length * 5 + 8;
+    }
+
+    function sectionTitle(title, yPos) {
+      doc.setFillColor(240, 238, 255);
+      doc.rect(16, yPos, W-32, 8, 'F');
+      doc.setTextColor(108,99,255); doc.setFontSize(9); doc.setFont('helvetica','bold');
+      doc.text(title, 20, yPos+5.5);
+      return yPos + 12;
+    }
+
+    function metricBox(label, value, x, yPos, bw=40) {
+      doc.setFillColor(248,247,255);
+      doc.roundedRect(x, yPos, bw, 18, 2, 2, 'F');
+      doc.setTextColor(108,99,255); doc.setFontSize(11); doc.setFont('helvetica','bold');
+      doc.text(String(value), x + bw/2, yPos+9, {align:'center'});
+      doc.setTextColor(120,120,140); doc.setFontSize(7); doc.setFont('helvetica','normal');
+      doc.text(label, x + bw/2, yPos+14, {align:'center'});
+    }
+
+    // Instagram
+    if (data.ig.followers || data.ig.reach) {
+      y = sectionTitle('📘  Instagram', y);
+      const bw = (W-32)/3 - 4;
+      metricBox('Seguidores', fmt(data.ig.followers), 16, y, bw);
+      metricBox('Nuevos seguids.', '+'+fmt(data.ig.newFollowers), 16+bw+4, y, bw);
+      metricBox('Alcance', fmt(data.ig.reach), 16+bw*2+8, y, bw);
+      y += 22;
+      metricBox('Impresiones', fmt(data.ig.impressions), 16, y, bw);
+      metricBox('Interacciones', fmt(data.ig.engagement), 16+bw+4, y, bw);
+      metricBox('Posts', fmt(data.ig.posts), 16+bw*2+8, y, bw);
+      y += 26;
+    }
+
+    // LinkedIn
+    if (data.li.followers || data.li.impressions) {
+      y = sectionTitle('💼  LinkedIn', y);
+      const bw = (W-32)/4 - 3;
+      metricBox('Seguidores', fmt(data.li.followers), 16, y, bw);
+      metricBox('Nuevos seguids.', '+'+fmt(data.li.newFollowers), 16+bw+3, y, bw);
+      metricBox('Impresiones', fmt(data.li.impressions), 16+bw*2+6, y, bw);
+      metricBox('Interacciones', fmt(data.li.engagement), 16+bw*3+9, y, bw);
+      y += 26;
+    }
+
+    // Web
+    if (data.web.sessions || data.web.users) {
+      y = sectionTitle('🌐  Sitio Web', y);
+      const bw = (W-32)/4 - 3;
+      metricBox('Sesiones', fmt(data.web.sessions), 16, y, bw);
+      metricBox('Usuarios únicos', fmt(data.web.users), 16+bw+3, y, bw);
+      metricBox('Tasa rebote', (data.web.bounce||0)+'%', 16+bw*2+6, y, bw);
+      metricBox('Duración media', (data.web.duration||0)+'s', 16+bw*3+9, y, bw);
+      y += 26;
+    }
+
+    // Achievements
+    const achieveList = data.achievements ? data.achievements.split('\n').filter(Boolean) : [];
+    if (achieveList.length) {
+      y = sectionTitle('✅  Logros del mes', y);
+      doc.setTextColor(40,40,40); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      achieveList.forEach(a => {
+        doc.text('•  ' + a, 20, y);
+        y += 6;
+      });
+      y += 4;
+    }
+
+    // Next steps
+    const nextList = data.next ? data.next.split('\n').filter(Boolean) : [];
+    if (nextList.length) {
+      y = sectionTitle('🔜  Próximos pasos', y);
+      doc.setTextColor(40,40,40); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      nextList.forEach(n => {
+        doc.text('•  ' + n, 20, y);
+        y += 6;
+      });
+    }
+
+    // Footer
+    doc.setFillColor(108,99,255);
+    doc.rect(0, H-12, W, 12, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text('Generado con ReportPro', W/2, H-5, {align:'center'});
+
+    // Save PDF
+    const filename = `Reporte_${client.name.replace(/\s+/g,'_')}_${data.period||'sin-fecha'}.pdf`;
+    doc.save(filename);
+
+    // Save report record
+    const record = { id: Date.now().toString(), clientId: data.clientId, period: data.period, date: new Date().toISOString(), data };
+    reports.push(record);
+    save();
+    toast('PDF descargado correctamente', 'success');
+    closePreview();
+  }
+
+  // ── REPORTS LIST ──
+  function renderReports() {
+    const tbody = document.getElementById('reports-table');
+    const empty = document.getElementById('reports-empty');
+    if (!reports.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    tbody.innerHTML = [...reports].reverse().map(r => {
+      const client = clients.find(c=>c.id===r.clientId);
+      return `<tr>
+        <td><strong>${client?.name||'Cliente eliminado'}</strong></td>
+        <td>${fmtPeriod(r.period)}</td>
+        <td>${new Date(r.date).toLocaleDateString('es-ES')}</td>
+        <td><span class="badge badge-green">Completado</span></td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="downloadReport('${r.id}')">Descargar PDF</button>
+          <button class="btn btn-sm btn-danger" style="margin-left:6px" onclick="deleteReport('${r.id}')">Eliminar</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function downloadReport(id) {
+    const r = reports.find(x=>x.id===id);
+    if (!r) return;
+    const client = clients.find(c=>c.id===r.clientId);
+    if (!client) { toast('El cliente de este reporte fue eliminado'); return; }
+    // Re-populate form fields temporarily for PDF gen
+    document.getElementById('report-client').value = r.clientId;
+    document.getElementById('report-period').value = r.period;
+    document.getElementById('report-summary').value = r.data.summary||'';
+    ['followers','newFollowers','reach','impressions','engagement','posts'].forEach(k => {
+      const el = document.getElementById('ig-'+k.replace('F','_f').replace('new_followers','new-followers'));
+      if (el) el.value = r.data.ig?.[k]||'';
+    });
+    document.getElementById('ig-followers').value = r.data.ig?.followers||'';
+    document.getElementById('ig-new-followers').value = r.data.ig?.newFollowers||'';
+    document.getElementById('ig-reach').value = r.data.ig?.reach||'';
+    document.getElementById('ig-impressions').value = r.data.ig?.impressions||'';
+    document.getElementById('ig-engagement').value = r.data.ig?.engagement||'';
+    document.getElementById('ig-posts').value = r.data.ig?.posts||'';
+    document.getElementById('li-followers').value = r.data.li?.followers||'';
+    document.getElementById('li-new-followers').value = r.data.li?.newFollowers||'';
+    document.getElementById('li-impressions').value = r.data.li?.impressions||'';
+    document.getElementById('li-engagement').value = r.data.li?.engagement||'';
+    document.getElementById('web-sessions').value = r.data.web?.sessions||'';
+    document.getElementById('web-users').value = r.data.web?.users||'';
+    document.getElementById('web-bounce').value = r.data.web?.bounce||'';
+    document.getElementById('web-duration').value = r.data.web?.duration||'';
+    document.getElementById('report-achievements').value = r.data.achievements||'';
+    document.getElementById('report-next').value = r.data.next||'';
+    generatePDF();
+  }
+
+  function deleteReport(id) {
+    if (!confirm('¿Eliminar este reporte?')) return;
+    reports = reports.filter(r=>r.id!==id);
+    save(); renderReports(); toast('Reporte eliminado');
+  }
+
+  // ── INIT ──
+  renderDashboard();
+  populateClientSelect();
+</script>
+</body>
+</html>
