@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} · Vibiz{% endblock %}
+{% block head %}
+<style>
+  /* ── TABS ── */
+  .tabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:28px;padding-bottom:4px;}
+  .tab{padding:9px 18px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);background:transparent;border:none;white-space:nowrap;transition:all .2s;}
+  .tab.active,.tab:hover{background:rgba(124,58,237,.12);color:#c4b5fd;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  /* ── DNA ── */
+  .dna-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;}
+  .dna-item label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px;}
+  .dna-item p{font-size:14px;line-height:1.6;}
+  .kw-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .kw{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.25);border-radius:999px;padding:4px 12px;font-size:12px;color:#c4b5fd;}
+
+  /* ── SCORES ── */
+  .scores-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:28px;}
+  .score-card{background:var(--card2);border-radius:10px;padding:16px;text-align:center;}
+  .score-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+  .score-num{font-size:36px;font-weight:900;line-height:1;}
+  .sc-high{color:#10b981;} .sc-mid{color:#f59e0b;} .sc-low{color:#ef4444;}
+
+  /* ── ADS ── */
+  .ads-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+  .ad-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;position:relative;}
+  .ad-header{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;display:flex;justify-content:space-between;align-items:center;}
+  .ad-google .ad-header{background:rgba(66,133,244,.12);color:#93c5fd;}
+  .ad-facebook .ad-header{background:rgba(59,130,246,.12);color:#93c5fd;}
+  .ad-ig .ad-header{background:rgba(236,72,153,.12);color:#f9a8d4;}
+  .ad-twitter .ad-header{background:rgba(29,161,242,.12);color:#7dd3fc;}
+  .ad-body{padding:16px;}
+  .google-title{font-size:13px;color:#60a5fa;font-weight:600;margin-bottom:8px;}
+  .google-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+  .google-enfoque{font-size:11px;color:var(--accent2);margin-top:10px;font-style:italic;}
+  .fb-hook{font-size:14px;font-weight:700;margin-bottom:8px;line-height:1.4;}
+  .fb-body{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;}
+  .fb-cta{display:inline-block;background:var(--accent);color:#fff;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;}
+  .fb-format{font-size:11px;color:var(--accent2);margin-top:10px;}
+  .ig-caption{font-size:13px;line-height:1.65;margin-bottom:10px;}
+  .ig-tags{font-size:12px;color:var(--accent2);line-height:1.7;word-break:break-word;}
+  .ig-visual{font-size:11px;color:var(--muted);margin-top:10px;font-style:italic;}
+  .tweet-text{font-size:14px;line-height:1.6;}
+
+  /* ── EMAILS ── */
+  .email-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;}
+  .email-header{padding:14px 18px;background:rgba(16,185,129,.08);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .email-type{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent3);}
+  .email-subject{font-size:15px;font-weight:700;margin-bottom:4px;}
+  .email-preview{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .email-body{font-size:13px;line-height:1.8;white-space:pre-wrap;}
+
+  /* ── LANDING ── */
+  .lp-preview{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;margin-bottom:20px;}
+  .lp-headline{font-size:28px;font-weight:900;margin-bottom:8px;line-height:1.2;}
+  .lp-sub{font-size:16px;color:var(--muted);margin-bottom:20px;}
+  .lp-cta{display:inline-block;background:var(--accent);color:#fff;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;margin-bottom:28px;}
+  .lp-benefits{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+  .lp-benefit{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+  .lp-benefit .icon{font-size:24px;margin-bottom:8px;}
+  .lp-benefit h4{font-size:14px;font-weight:700;margin-bottom:4px;}
+  .lp-benefit p{font-size:13px;color:var(--muted);}
+  .lp-faq{margin-top:20px;}
+  .faq-item{border-bottom:1px solid var(--border);padding:14px 0;}
+  .faq-q{font-size:14px;font-weight:600;margin-bottom:6px;}
+  .faq-a{font-size:13px;color:var(--muted);line-height:1.6;}
+
+  /* ── SEO ── */
+  .rec-item{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;display:grid;grid-template-columns:auto 1fr;gap:14px;}
+  .rec-impact{font-size:20px;flex-shrink:0;}
+  .rec-title{font-size:15px;font-weight:700;margin-bottom:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .badge-alto{background:rgba(239,68,68,.15);color:#fca5a5;border-radius:999px;font-size:10px;font-weight:700;padding:2px 8px;}
+  .badge-medio{background:rgba(245,158,11,.15);color:#fcd34d;border-radius:999px;font-size:10px;font-weight:700;padding:2px 8px;}
+  .badge-bajo{background:rgba(16,185,129,.15);color:#6ee7b7;border-radius:999px;font-size:10px;font-weight:700;padding:2px 8px;}
+  .rec-problem{font-size:13px;color:var(--muted);margin-bottom:8px;}
+  .rec-sol{font-size:13px;background:rgba(6,182,212,.07);border-left:3px solid var(--accent2);padding:8px 12px;border-radius:0 6px 6px 0;color:#a5f3fc;line-height:1.5;}
+  .rec-effort{font-size:11px;color:var(--muted);margin-top:6px;}
+
+  /* ── CALENDAR ── */
+  .cal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+  .cal-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+  .cal-day{font-size:22px;font-weight:900;color:var(--accent);margin-bottom:4px;}
+  .cal-meta{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+  .cal-red{font-size:11px;background:rgba(124,58,237,.15);color:#c4b5fd;border-radius:6px;padding:2px 8px;font-weight:600;}
+  .cal-tipo{font-size:11px;background:rgba(6,182,212,.12);color:#67e8f9;border-radius:6px;padding:2px 8px;font-weight:600;}
+  .cal-tema{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .cal-gancho{font-size:12px;color:var(--muted);line-height:1.5;}
+
+  /* ── COPY BTN ── */
+  .copy-btn{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:11px;padding:4px 10px;transition:all .2s;font-family:inherit;}
+  .copy-btn:hover{background:var(--border);color:var(--text);}
+  .copy-btn.ok{color:var(--accent3);border-color:var(--accent3);}
+</style>
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <a href="{{ url_for('dashboard') }}" class="sidebar-link">📊 Dashboard</a>
+    <a href="{{ url_for('analyze') }}" class="sidebar-link">⚡ Nuevo análisis</a>
+    <a href="{{ url_for('settings') }}" class="sidebar-link">⚙️ Cuenta</a>
+  </aside>
+
+  <main class="main-content">
+    <!-- HEADER -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap">
+      <div>
+        <div class="page-title">{{ project.title }}</div>
+        <div class="page-sub">🔗 {{ project.url }} · {{ project.created_at[:10] }}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <a href="{{ url_for('analyze') }}" class="btn btn-ghost btn-sm">+ Nuevo análisis</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-sm">← Dashboard</a>
+      </div>
+    </div>
+
+    <!-- SCORES -->
+    {% set sc = report.puntuacion %}
+    <div class="scores-row">
+      {% for key, label in [('seo','SEO'),('copy','Copy'),('conversion','Conversión'),('redes_sociales','Redes')] %}
+      {% set val = sc[key] %}
+      <div class="score-card">
+        <div class="score-label">{{ label }}</div>
+        <div class="score-num {{ 'sc-high' if val >= 7 else ('sc-mid' if val >= 4 else 'sc-low') }}">{{ val }}</div>
+      </div>
+      {% endfor %}
+      <div class="score-card" style="grid-column:span 1">
+        <div class="score-label">General</div>
+        <div class="score-num {{ 'sc-high' if sc.general >= 7 else ('sc-mid' if sc.general >= 4 else 'sc-low') }}">{{ sc.general }}</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('dna',this)">🧬 Business DNA</button>
+      <button class="tab" onclick="showTab('google',this)">🔵 Google Ads</button>
+      <button class="tab" onclick="showTab('facebook',this)">📘 Facebook Ads</button>
+      <button class="tab" onclick="showTab('instagram',this)">📸 Instagram</button>
+      <button class="tab" onclick="showTab('twitter',this)">🐦 Twitter/X</button>
+      <button class="tab" onclick="showTab('emails',this)">📧 Emails</button>
+      <button class="tab" onclick="showTab('landing',this)">🏠 Landing</button>
+      <button class="tab" onclick="showTab('seo',this)">🔍 SEO</button>
+      <button class="tab" onclick="showTab('calendar',this)">📅 Calendario</button>
+    </div>
+
+    <!-- DNA -->
+    <div class="tab-panel active" id="tab-dna">
+      <div class="card">
+        <div class="dna-grid">
+          {% set dna = report.dna_negocio %}
+          <div class="dna-item"><label>Negocio</label><p>{{ dna.nombre }}</p></div>
+          <div class="dna-item"><label>Sector</label><p>{{ dna.sector }}</p></div>
+          <div class="dna-item"><label>Tono de voz</label><p>{{ dna.tono_de_voz }}</p></div>
+          <div class="dna-item" style="grid-column:span 2"><label>Resumen</label><p>{{ dna.resumen }}</p></div>
+          <div class="dna-item" style="grid-column:span 2"><label>Público objetivo</label><p>{{ dna.publico_objetivo }}</p></div>
+          <div class="dna-item" style="grid-column:span 3"><label>Propuesta de valor</label><p>{{ dna.propuesta_valor }}</p></div>
+        </div>
+        <div>
+          <label class="form-label">Palabras clave de marca</label>
+          <div class="kw-list">
+            {% for kw in dna.palabras_clave_marca %}
+              <span class="kw">{{ kw }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <p style="margin-top:16px;font-size:13px;color:var(--muted);font-style:italic">{{ sc.resumen }}</p>
+      </div>
+    </div>
+
+    <!-- GOOGLE ADS -->
+    <div class="tab-panel" id="tab-google">
+      <div class="ads-grid">
+        {% for ad in report.google_ads %}
+        <div class="ad-card ad-google">
+          <div class="ad-header">🔵 Google Ad · Variante {{ loop.index }}
+            <button class="copy-btn" onclick="copyText(`{{ ad.titulo_1 }} | {{ ad.titulo_2 }} | {{ ad.titulo_3 }}\n{{ ad.descripcion_1 }}\n{{ ad.descripcion_2 }}`, this)">Copiar</button>
+          </div>
+          <div class="ad-body">
+            <div class="google-title">{{ ad.titulo_1 }} · {{ ad.titulo_2 }} · {{ ad.titulo_3 }}</div>
+            <div class="google-desc">{{ ad.descripcion_1 }}</div>
+            <div class="google-desc">{{ ad.descripcion_2 }}</div>
+            <div class="google-enfoque">Estrategia: {{ ad.enfoque }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- FACEBOOK ADS -->
+    <div class="tab-panel" id="tab-facebook">
+      <div class="ads-grid">
+        {% for ad in report.facebook_ads %}
+        <div class="ad-card ad-facebook">
+          <div class="ad-header">📘 Facebook Ad · Variante {{ loop.index }}
+            <button class="copy-btn" onclick="copyText(`{{ ad.gancho }}\n\n{{ ad.cuerpo }}\n\n👉 {{ ad.cta_boton }}`, this)">Copiar</button>
+          </div>
+          <div class="ad-body">
+            <div class="fb-hook">{{ ad.gancho }}</div>
+            <div class="fb-body">{{ ad.cuerpo }}</div>
+            <span class="fb-cta">{{ ad.cta_boton }}</span>
+            <div class="fb-format">📐 Formato recomendado: {{ ad.formato_recomendado }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- INSTAGRAM -->
+    <div class="tab-panel" id="tab-instagram">
+      <div class="ads-grid">
+        {% for post in report.instagram_posts %}
+        <div class="ad-card ad-ig">
+          <div class="ad-header">📸 {{ post.tipo }} · Post {{ loop.index }}
+            <button class="copy-btn" onclick="copyText(`{{ post.caption }}\n\n{{ post.hashtags }}`, this)">Copiar</button>
+          </div>
+          <div class="ad-body">
+            <div class="ig-caption">{{ post.caption }}</div>
+            <div class="ig-tags">{{ post.hashtags }}</div>
+            <div class="ig-visual">💡 {{ post.idea_visual }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- TWITTER -->
+    <div class="tab-panel" id="tab-twitter">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:580px;">
+        {% for tw in report.twitter_posts %}
+        <div class="ad-card ad-twitter">
+          <div class="ad-header">🐦 Tweet {{ loop.index }}
+            <button class="copy-btn" onclick="copyText(`{{ tw.texto }}`, this)">Copiar</button>
+          </div>
+          <div class="ad-body">
+            <div class="tweet-text">{{ tw.texto }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- EMAILS -->
+    <div class="tab-panel" id="tab-emails">
+      {% for email in report.emails %}
+      <div class="email-card">
+        <div class="email-header">
+          <div>
+            <div class="email-type">{{ email.tipo }}</div>
+            <div class="email-subject">Asunto: {{ email.asunto }}</div>
+            <div style="font-size:12px;color:var(--muted)">Preview: {{ email.preview_text }}</div>
+          </div>
+          <button class="copy-btn" onclick="copyText(`ASUNTO: {{ email.asunto }}\n\n{{ email.cuerpo }}`, this)">Copiar todo</button>
+        </div>
+        <div style="padding:18px">
+          <div class="email-body">{{ email.cuerpo }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- LANDING -->
+    <div class="tab-panel" id="tab-landing">
+      {% set lp = report.landing_page %}
+      <div class="lp-preview">
+        <div class="lp-headline">{{ lp.headline }}</div>
+        <div class="lp-sub">{{ lp.subheadline }}</div>
+        <div class="lp-cta">{{ lp.cta_principal }}</div>
+        <div class="lp-benefits">
+          {% for b in lp.beneficios %}
+          <div class="lp-benefit">
+            <div class="icon">{{ b.icono }}</div>
+            <h4>{{ b.titulo }}</h4>
+            <p>{{ b.descripcion }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        <div style="background:rgba(124,58,237,.1);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-size:14px;margin-bottom:20px;">
+          <strong>Prueba social:</strong> {{ lp.prueba_social }}
+        </div>
+        <div class="lp-faq">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:14px">Preguntas frecuentes</h3>
+          {% for faq in lp.faq %}
+          <div class="faq-item">
+            <div class="faq-q">{{ faq.pregunta }}</div>
+            <div class="faq-a">{{ faq.respuesta }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="copyText(`{{ lp.headline }}\n{{ lp.subheadline }}\n\nCTA: {{ lp.cta_principal }}\n\nPrueba social: {{ lp.prueba_social }}`, this)">Copiar copy principal</button>
+    </div>
+
+    <!-- SEO -->
+    <div class="tab-panel" id="tab-seo">
+      {% for rec in report.seo_recomendaciones %}
+      <div class="rec-item">
+        <div class="rec-impact">{{ '🔴' if rec.impacto == 'alto' else ('🟡' if rec.impacto == 'medio' else '🟢') }}</div>
+        <div>
+          <div class="rec-title">
+            {{ rec.titulo }}
+            <span class="badge-{{ rec.impacto }}">impacto {{ rec.impacto }}</span>
+          </div>
+          <div class="rec-problem">{{ rec.problema }}</div>
+          <div class="rec-sol">💡 {{ rec.solucion }}</div>
+          <div class="rec-effort">Esfuerzo de implementación: {{ rec.esfuerzo }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="tab-panel" id="tab-calendar">
+      <div class="cal-grid">
+        {% for item in report.calendario_contenido %}
+        <div class="cal-card">
+          <div class="cal-day">Día {{ item.dia }}</div>
+          <div class="cal-meta">
+            <span class="cal-red">{{ item.red }}</span>
+            <span class="cal-tipo">{{ item.tipo }}</span>
+          </div>
+          <div class="cal-tema">{{ item.tema }}</div>
+          <div class="cal-gancho">"{{ item.gancho }}"</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function showTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copiado';
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('ok'); }, 1800);
+    });
+  }
+</script>
+{% endblock %}

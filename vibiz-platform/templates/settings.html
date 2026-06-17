@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Cuenta y Suscripción · Vibiz{% endblock %}
+{% block head %}
+<style>
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:800px;}
+  .plan-card{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(6,182,212,.08));border:1px solid rgba(124,58,237,.3);border-radius:var(--radius-lg);padding:28px;}
+  @media(max-width:640px){.settings-grid{grid-template-columns:1fr;}}
+</style>
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <a href="{{ url_for('dashboard') }}" class="sidebar-link">📊 Dashboard</a>
+    <a href="{{ url_for('analyze') }}" class="sidebar-link">⚡ Nuevo análisis</a>
+    <a href="{{ url_for('settings') }}" class="sidebar-link active">⚙️ Cuenta</a>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-title">Cuenta y Suscripción</div>
+    <div class="page-sub">Gestiona tu plan y datos de acceso.</div>
+
+    <div class="settings-grid">
+      <!-- ACCOUNT INFO -->
+      <div class="card">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:20px">Información de cuenta</h3>
+        <div style="margin-bottom:14px">
+          <div class="form-label">Email</div>
+          <div style="font-size:15px;color:var(--text)">{{ user.email }}</div>
+        </div>
+        <div style="margin-bottom:20px">
+          <div class="form-label">Plan actual</div>
+          <span class="badge {{ 'badge-pro' if user.plan == 'pro' else 'badge-free' }}">
+            {{ "PRO" if user.plan == "pro" else "GRATIS" }}
+          </span>
+        </div>
+        <div>
+          <div class="form-label">Análisis usados</div>
+          <div style="font-size:15px">{{ user.analyses_used }}</div>
+        </div>
+      </div>
+
+      <!-- PLAN -->
+      {% if user.plan == 'pro' %}
+      <div class="plan-card">
+        <div style="font-size:28px;margin-bottom:10px">🎉</div>
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:8px">Plan Pro activo</h3>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Tienes análisis ilimitados y todos los proyectos guardados.</p>
+        <p style="font-size:13px;color:var(--muted)">Para cancelar tu suscripción, escríbenos a <a href="mailto:hola@vibiz.ai" style="color:var(--accent2)">hola@vibiz.ai</a></p>
+      </div>
+      {% else %}
+      <div class="plan-card">
+        <h3 style="font-size:20px;font-weight:800;margin-bottom:8px">Pásate a Pro</h3>
+        <div style="font-size:38px;font-weight:900;background:linear-gradient(135deg,#c4b5fd,#67e8f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;">$20<span style="-webkit-text-fill-color:var(--muted);font-size:16px;font-weight:400">/mes</span></div>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Análisis ilimitados · Proyectos guardados · Analiza la competencia</p>
+        <form action="{{ url_for('create_checkout_session') }}" method="POST">
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;">Suscribirme por $20/mes →</button>
+        </form>
+        <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px">Cancela cuando quieras · Pago seguro con Stripe</p>
+      </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

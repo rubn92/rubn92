@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Vibiz — AI Marketing Platform{% endblock %}</title>
+  <style>
+    :root {
+      --bg: #07070f;
+      --surface: #0f0f1a;
+      --card: #151522;
+      --card2: #1c1c2e;
+      --border: #252538;
+      --accent: #7c3aed;
+      --accent-h: #6d28d9;
+      --accent2: #06b6d4;
+      --accent3: #10b981;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --radius: 12px;
+      --radius-lg: 18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;min-height:100vh;line-height:1.6;}
+    a{color:inherit;text-decoration:none;}
+    button{font-family:inherit;}
+
+    /* ── NAV ── */
+    .topnav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 32px;border-bottom:1px solid var(--border);
+      position:sticky;top:0;background:rgba(7,7,15,0.88);
+      backdrop-filter:blur(14px);z-index:200;
+    }
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;}
+    .logo-name{font-size:20px;font-weight:800;background:linear-gradient(135deg,#c4b5fd,#67e8f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .nav-links{display:flex;align-items:center;gap:8px;}
+    .nav-links a{color:var(--muted);font-size:14px;padding:8px 14px;border-radius:8px;transition:all .2s;}
+    .nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05);}
+    .btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;padding:10px 20px;transition:all .15s;}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-h));color:#fff;}
+    .btn-primary:hover{opacity:.88;transform:translateY(-1px);}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+    .btn-ghost:hover{background:var(--card2);}
+    .btn-danger{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
+    .btn-sm{padding:7px 14px;font-size:13px;}
+    .btn-lg{padding:14px 32px;font-size:16px;border-radius:12px;}
+
+    /* ── FLASH ── */
+    .flashes{position:fixed;top:70px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;}
+    .flash{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;max-width:340px;animation:slideIn .3s ease;}
+    .flash-success{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;}
+    .flash-error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
+    .flash-info{background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);color:#67e8f9;}
+    @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+    /* ── LAYOUT ── */
+    .app-shell{display:flex;min-height:calc(100vh - 67px);}
+    .sidebar{width:220px;border-right:1px solid var(--border);padding:24px 14px;flex-shrink:0;position:sticky;top:67px;height:calc(100vh - 67px);overflow-y:auto;}
+    .sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:var(--muted);font-size:14px;transition:all .2s;margin-bottom:2px;}
+    .sidebar-link:hover,.sidebar-link.active{background:rgba(124,58,237,.12);color:#c4b5fd;}
+    .sidebar-link.active{font-weight:600;}
+    .main-content{flex:1;padding:36px 40px;min-width:0;}
+    .page-title{font-size:26px;font-weight:800;margin-bottom:6px;}
+    .page-sub{color:var(--muted);font-size:14px;margin-bottom:32px;}
+
+    /* ── CARDS ── */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;}
+    .card-sm{padding:16px;border-radius:var(--radius);}
+
+    /* ── FORMS ── */
+    .form-group{margin-bottom:18px;}
+    .form-label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em;}
+    .form-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;padding:12px 16px;outline:none;transition:border-color .2s;}
+    .form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,.15);}
+    .form-input::placeholder{color:var(--muted);}
+
+    /* ── BADGE ── */
+    .badge{display:inline-block;border-radius:999px;font-size:11px;font-weight:700;padding:3px 10px;text-transform:uppercase;letter-spacing:.05em;}
+    .badge-pro{background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(6,182,212,.15));color:#c4b5fd;border:1px solid rgba(124,58,237,.3);}
+    .badge-free{background:rgba(148,163,184,.1);color:var(--muted);border:1px solid var(--border);}
+
+    /* ── PLAN BANNER ── */
+    .plan-banner{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(6,182,212,.08));border:1px solid rgba(124,58,237,.25);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:28px;flex-wrap:wrap;}
+    .plan-banner p{font-size:14px;color:var(--muted);}
+    .plan-banner strong{color:var(--text);}
+
+    @media(max-width:768px){
+      .topnav{padding:12px 16px;}
+      .sidebar{display:none;}
+      .main-content{padding:20px 16px;}
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="{{ url_for('index') }}" class="logo">
+    <div class="logo-icon">⚡</div>
+    <span class="logo-name">Vibiz</span>
+  </a>
+  <div class="nav-links">
+    {% if user %}
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-ghost btn-sm">Salir</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Iniciar sesión</a>
+      <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Empezar gratis</a>
+    {% endif %}
+  </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flashes">
+      {% for cat, msg in messages %}
+        <div class="flash flash-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    </div>
+    <script>setTimeout(()=>{document.querySelector('.flashes')?.remove()},4000)</script>
+  {% endif %}
+{% endwith %}
+
+{% block body %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ "Crear cuenta" if mode=="register" else "Iniciar sesión" }} · Vibiz{% endblock %}
+{% block head %}
+<style>
+  .auth-wrap{min-height:calc(100vh - 67px);display:flex;align-items:center;justify-content:center;padding:40px 24px;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(124,58,237,.15),transparent 70%);}
+  .auth-box{width:100%;max-width:420px;}
+  .auth-box h1{font-size:26px;font-weight:800;margin-bottom:6px;text-align:center;}
+  .auth-box .sub{color:var(--muted);font-size:14px;text-align:center;margin-bottom:32px;}
+  .auth-switch{text-align:center;font-size:14px;color:var(--muted);margin-top:24px;}
+  .auth-switch a{color:#c4b5fd;font-weight:600;}
+  .form-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 14px;color:#fca5a5;font-size:13px;margin-bottom:16px;}
+</style>
+{% endblock %}
+{% block body %}
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div style="text-align:center;margin-bottom:24px">
+      <a href="{{ url_for('index') }}" class="logo" style="display:inline-flex;justify-content:center">
+        <div class="logo-icon">⚡</div>
+        <span class="logo-name">Vibiz</span>
+      </a>
+    </div>
+
+    <h1>{{ "Crear tu cuenta" if mode=="register" else "Bienvenido de nuevo" }}</h1>
+    <p class="sub">{{ "Empieza gratis, sin tarjeta de crédito." if mode=="register" else "Introduce tus datos para acceder." }}</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="form-error">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="card">
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" name="email" placeholder="tu@email.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" type="password" name="password" placeholder="Mínimo 8 caracteres" required autocomplete="{{ 'new-password' if mode=='register' else 'current-password' }}" />
+        </div>
+        {% if mode == "register" %}
+        <div class="form-group">
+          <label class="form-label">Confirmar contraseña</label>
+          <input class="form-input" type="password" name="confirm" placeholder="Repite la contraseña" required />
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;">
+          {{ "Crear cuenta gratis" if mode=="register" else "Iniciar sesión" }}
+        </button>
+      </form>
+    </div>
+
+    <div class="auth-switch">
+      {% if mode == "register" %}
+        ¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a>
+      {% else %}
+        ¿No tienes cuenta? <a href="{{ url_for('register') }}">Regístrate gratis</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

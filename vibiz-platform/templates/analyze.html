@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Nuevo análisis · Vibiz{% endblock %}
+{% block head %}
+<style>
+  .analyze-wrap{max-width:700px;margin:0 auto;padding:60px 24px;}
+  .analyze-wrap h1{font-size:32px;font-weight:800;margin-bottom:8px;}
+  .analyze-wrap .sub{color:var(--muted);font-size:16px;margin-bottom:40px;}
+  .url-box{display:flex;gap:0;background:var(--card);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color .2s;}
+  .url-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,.15);}
+  .url-box input{flex:1;background:transparent;border:none;outline:none;padding:18px 20px;font-size:16px;color:var(--text);}
+  .url-box input::placeholder{color:var(--muted);}
+  .url-box button{background:linear-gradient(135deg,var(--accent),var(--accent-h));border:none;cursor:pointer;padding:16px 28px;color:#fff;font-size:15px;font-weight:700;transition:opacity .2s;white-space:nowrap;display:flex;align-items:center;gap:8px;}
+  .url-box button:hover{opacity:.88;}
+  .url-box button:disabled{opacity:.5;cursor:not-allowed;}
+
+  .loading-state{display:none;text-align:center;padding:60px 0;}
+  .loading-state.active{display:block;}
+  .spinner{width:56px;height:56px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 24px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .progress-steps{display:flex;flex-direction:column;gap:10px;margin-top:24px;max-width:360px;margin-left:auto;margin-right:auto;}
+  .pstep{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border-radius:10px;font-size:14px;opacity:.4;transition:all .4s;}
+  .pstep.active{opacity:1;border:1px solid rgba(124,58,237,.3);background:rgba(124,58,237,.07);}
+  .pstep.done{opacity:1;color:var(--accent3);}
+
+  .error-box{display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px 18px;color:#fca5a5;font-size:14px;margin-top:16px;}
+  .error-box.active{display:block;}
+
+  .upgrade-box{display:none;background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(6,182,212,.08));border:1px solid rgba(124,58,237,.3);border-radius:var(--radius-lg);padding:28px;text-align:center;margin-top:20px;}
+  .upgrade-box.active{display:block;}
+
+  .what-get{margin-top:40px;}
+  .what-get h3{font-size:15px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;}
+  .what-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .what-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;display:flex;align-items:center;gap:8px;}
+</style>
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <a href="{{ url_for('dashboard') }}" class="sidebar-link">📊 Dashboard</a>
+    <a href="{{ url_for('analyze') }}" class="sidebar-link active">⚡ Nuevo análisis</a>
+    <a href="{{ url_for('settings') }}" class="sidebar-link">⚙️ Cuenta</a>
+  </aside>
+
+  <main class="main-content">
+    <div class="analyze-wrap">
+      <h1>⚡ Nuevo análisis</h1>
+      <p class="sub">Introduce la URL de cualquier web y Vibiz generará el kit completo de marketing en segundos.</p>
+
+      <div class="url-box">
+        <input type="url" id="urlInput" placeholder="https://tunegocio.com" autocomplete="off" spellcheck="false" />
+        <button id="analyzeBtn" onclick="startAnalysis()">
+          <span id="btnLabel">Analizar →</span>
+        </button>
+      </div>
+
+      <div class="error-box" id="errorBox"></div>
+      <div class="upgrade-box" id="upgradeBox">
+        <h3 style="font-size:20px;font-weight:800;margin-bottom:8px">Análisis gratuito agotado</h3>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Suscríbete por $20/mes para análisis ilimitados y proyectos guardados.</p>
+        <a href="{{ url_for('settings') }}" class="btn btn-primary btn-lg">Suscribirme por $20/mes →</a>
+      </div>
+
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p style="font-size:18px;font-weight:700;margin-bottom:6px">Analizando con IA…</p>
+        <p style="color:var(--muted);font-size:14px">Esto puede tardar 20-40 segundos</p>
+        <div class="progress-steps">
+          <div class="pstep active" id="s1">🕷️ Extrayendo contenido de la web</div>
+          <div class="pstep" id="s2">🧬 Identificando Business DNA</div>
+          <div class="pstep" id="s3">✍️ Generando anuncios y copies</div>
+          <div class="pstep" id="s4">📅 Creando calendario y estrategia</div>
+          <div class="pstep" id="s5">✅ Guardando informe</div>
+        </div>
+      </div>
+
+      <div class="what-get">
+        <h3>Vas a recibir</h3>
+        <div class="what-grid">
+          <div class="what-item">🧬 Business DNA completo</div>
+          <div class="what-item">🔵 3 Anuncios Google Ads</div>
+          <div class="what-item">📘 3 Anuncios Facebook/Instagram</div>
+          <div class="what-item">📸 5 Posts para Instagram</div>
+          <div class="what-item">🐦 5 Tweets listos</div>
+          <div class="what-item">📧 3 Emails secuencia</div>
+          <div class="what-item">🏠 Copy para landing page</div>
+          <div class="what-item">🔍 5 Mejoras SEO</div>
+          <div class="what-item">📅 Calendario 21 días</div>
+          <div class="what-item">📊 Puntuación de marketing</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const steps = ['s1','s2','s3','s4','s5'];
+  let stepIdx = 0;
+  let stepTimer = null;
+
+  function advanceStep() {
+    if (stepIdx < steps.length - 1) {
+      document.getElementById(steps[stepIdx]).classList.remove('active');
+      document.getElementById(steps[stepIdx]).classList.add('done');
+      stepIdx++;
+      document.getElementById(steps[stepIdx]).classList.add('active');
+      stepTimer = setTimeout(advanceStep, 8000);
+    }
+  }
+
+  async function startAnalysis() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) { document.getElementById('urlInput').focus(); return; }
+
+    document.getElementById('errorBox').classList.remove('active');
+    document.getElementById('upgradeBox').classList.remove('active');
+    document.getElementById('loadingState').classList.add('active');
+    document.getElementById('analyzeBtn').disabled = true;
+    document.getElementById('btnLabel').textContent = 'Analizando…';
+
+    // reset steps
+    stepIdx = 0;
+    steps.forEach(s => { document.getElementById(s).className = 'pstep'; });
+    document.getElementById('s1').classList.add('active');
+    clearTimeout(stepTimer);
+    stepTimer = setTimeout(advanceStep, 5000);
+
+    document.getElementById('loadingState').scrollIntoView({behavior:'smooth',block:'center'});
+
+    try {
+      const res = await fetch('/analyze', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({url}),
+      });
+      const data = await res.json();
+      clearTimeout(stepTimer);
+
+      if (data.upgrade) {
+        document.getElementById('loadingState').classList.remove('active');
+        document.getElementById('upgradeBox').classList.add('active');
+        document.getElementById('analyzeBtn').disabled = false;
+        document.getElementById('btnLabel').textContent = 'Analizar →';
+        return;
+      }
+
+      if (data.error) {
+        document.getElementById('loadingState').classList.remove('active');
+        document.getElementById('errorBox').textContent = '⚠️ ' + data.error;
+        document.getElementById('errorBox').classList.add('active');
+        document.getElementById('analyzeBtn').disabled = false;
+        document.getElementById('btnLabel').textContent = 'Analizar →';
+        return;
+      }
+
+      // Done — redirect to project
+      window.location.href = '/project/' + data.project_id;
+
+    } catch(e) {
+      clearTimeout(stepTimer);
+      document.getElementById('loadingState').classList.remove('active');
+      document.getElementById('errorBox').textContent = '⚠️ Error de conexión. Inténtalo de nuevo.';
+      document.getElementById('errorBox').classList.add('active');
+      document.getElementById('analyzeBtn').disabled = false;
+      document.getElementById('btnLabel').textContent = 'Analizar →';
+    }
+  }
+
+  document.getElementById('urlInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startAnalysis();
+  });
+</script>
+{% endblock %}
