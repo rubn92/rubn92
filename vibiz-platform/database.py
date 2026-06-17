@@ -15,6 +15,11 @@ def get_db():
 def init_db():
     with get_db() as conn:
         conn.executescript(SCHEMA_PATH.read_text())
+        # migrations
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN webhook_url TEXT")
+        except Exception:
+            pass
 
 
 # ── USERS ──
@@ -53,6 +58,14 @@ def update_user_plan(user_id: int, plan: str, stripe_customer_id: str = None,
                stripe_subscription_id=COALESCE(?,stripe_subscription_id)
                WHERE id=?""",
             (plan, stripe_customer_id, stripe_subscription_id, user_id),
+        )
+
+
+def update_webhook(user_id: int, webhook_url: str):
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET webhook_url=? WHERE id=?",
+            (webhook_url or None, user_id),
         )
 
 

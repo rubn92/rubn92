@@ -51,7 +51,12 @@
       <div class="plan-card">
         <h3 style="font-size:20px;font-weight:800;margin-bottom:8px">Pásate a Pro</h3>
         <div style="font-size:38px;font-weight:900;background:linear-gradient(135deg,#c4b5fd,#67e8f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;">$20<span style="-webkit-text-fill-color:var(--muted);font-size:16px;font-weight:400">/mes</span></div>
-        <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Análisis ilimitados · Proyectos guardados · Analiza la competencia</p>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Análisis ilimitados · ZIP descargable · Landing page · Competencia</p>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+          {% for feat in ['Análisis ilimitados','Descarga ZIP con todo el contenido','Landing page HTML descargable','Análisis vs competidores','Webhook Zapier / Make.com','Proyectos guardados sin límite'] %}
+          <li style="font-size:13px;display:flex;gap:8px"><span style="color:var(--accent3)">✓</span>{{ feat }}</li>
+          {% endfor %}
+        </ul>
         <form action="{{ url_for('create_checkout_session') }}" method="POST">
           <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;">Suscribirme por $20/mes →</button>
         </form>
@@ -59,6 +64,30 @@
       </div>
       {% endif %}
     </div>
+
+    <!-- WEBHOOK -->
+    {% if user.plan == 'pro' %}
+    <div class="card" style="max-width:800px;margin-top:24px">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:6px">⚡ Webhook — Conectar con Zapier / Make.com</h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Cada vez que analices una web, Vibiz enviará automáticamente el contenido generado a tu URL de webhook. Conecta con Zapier o Make para publicar en redes, guardar en Notion, enviar emails, etc.</p>
+      <form method="POST" action="{{ url_for('save_webhook') }}">
+        <div class="form-group">
+          <label class="form-label">URL del Webhook (Zapier / Make / tu servidor)</label>
+          <input class="form-input" type="url" name="webhook_url"
+                 placeholder="https://hooks.zapier.com/hooks/catch/..."
+                 value="{{ user.webhook_url or '' }}" />
+        </div>
+        <button type="submit" class="btn btn-ghost">Guardar webhook</button>
+        {% if user.webhook_url %}
+        <span style="margin-left:12px;font-size:13px;color:var(--accent3)">✓ Webhook activo</span>
+        {% endif %}
+      </form>
+      <div style="margin-top:16px;background:var(--card2);border-radius:8px;padding:14px;font-size:12px;color:var(--muted)">
+        <strong style="color:var(--text)">Datos que recibirás en cada análisis:</strong><br/>
+        project_id · url · negocio · google_ad_1 · facebook_ad_1 · instagram_post_1 · tweet_1 · seo_top
+      </div>
+    </div>
+    {% endif %}
   </main>
 </div>
 {% endblock %}

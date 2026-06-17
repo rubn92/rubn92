@@ -211,6 +211,130 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin texto antes o
 Todos los textos deben estar en español. Sé específico, creativo y usa el tono de voz que identificaste para esa marca."""
 
 
+def generate_landing_html(api_key: str, report: dict) -> str:
+    """Generate a complete deployable HTML landing page from the report."""
+    dna = report.get("dna_negocio", {})
+    lp = report.get("landing_page", {})
+    beneficios = lp.get("beneficios", [])
+    faq = lp.get("faq", [])
+    kws = dna.get("palabras_clave_marca", [])
+
+    client = anthropic.Anthropic(api_key=api_key)
+    prompt = f"""Genera una landing page HTML completa, moderna y profesional lista para publicar.
+
+DATOS DEL NEGOCIO:
+- Nombre: {dna.get('nombre', '')}
+- Sector: {dna.get('sector', '')}
+- Público objetivo: {dna.get('publico_objetivo', '')}
+- Propuesta de valor: {dna.get('propuesta_valor', '')}
+- Tono de voz: {dna.get('tono_de_voz', '')}
+- Palabras clave: {', '.join(kws)}
+
+COPY YA CREADO:
+- Headline: {lp.get('headline', '')}
+- Subheadline: {lp.get('subheadline', '')}
+- CTA: {lp.get('cta_principal', '')}
+- Beneficios: {json.dumps(beneficios, ensure_ascii=False)}
+- Prueba social: {lp.get('prueba_social', '')}
+- FAQ: {json.dumps(faq, ensure_ascii=False)}
+
+REQUISITOS TÉCNICOS:
+- Un único archivo HTML con todo el CSS inline en <style>
+- Sin dependencias externas excepto Google Fonts (una fuente moderna)
+- Diseño oscuro y moderno (fondo oscuro, acentos de color según el sector)
+- Secciones: hero con CTA, beneficios (3 cards), prueba social/stats, FAQ, footer con email de contacto
+- Totalmente responsive (mobile first)
+- Botón CTA debe tener href="#contacto" y un formulario de contacto básico al final
+- Variables CSS para colores para fácil personalización
+- Comentarios HTML indicando qué personalizar (URL del CTA, email, teléfono)
+
+IMPORTANTE: Responde ÚNICAMENTE con el código HTML completo, empezando con <!DOCTYPE html>. Sin markdown, sin explicaciones."""
+
+    message = client.messages.create(
+        model="claude-opus-4-8",
+        max_tokens=8000,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    html = message.content[0].text.strip()
+    html = re.sub(r"^```(?:html)?\s*", "", html)
+    html = re.sub(r"\s*```$", "", html)
+    return html
+
+
+def analyze_competitor(api_key: str, scraped1: dict, scraped2: dict) -> dict:
+    """Compare two businesses and return strategic opportunities."""
+    client = anthropic.Anthropic(api_key=api_key)
+
+    def fmt(d):
+        return f"""URL: {d['url']}
+Título: {d['title']}
+Descripción: {d['description']}
+H1: {', '.join(d['h1s'])}
+H2: {', '.join(d['h2s'])}
+Textos: {' | '.join(d['paragraphs'][:5])}
+CTAs: {', '.join(d['ctas'][:6])}"""
+
+    prompt = f"""Eres un estratega de marketing experto en análisis competitivo.
+
+=== TU NEGOCIO ===
+{fmt(scraped1)}
+
+=== COMPETIDOR ===
+{fmt(scraped2)}
+
+Responde ÚNICAMENTE con JSON válido (sin markdown):
+
+{{
+  "tu_negocio": {{
+    "nombre": "...",
+    "fortalezas": ["...", "...", "..."],
+    "debilidades": ["...", "...", "..."],
+    "puntuacion_web": 7
+  }},
+  "competidor": {{
+    "nombre": "...",
+    "fortalezas": ["...", "...", "..."],
+    "debilidades": ["...", "...", "..."],
+    "puntuacion_web": 6
+  }},
+  "ganador_general": "tu_negocio/competidor/empate",
+  "oportunidades": [
+    {{"titulo": "Oportunidad 1", "descripcion": "Cómo aprovecharla específicamente", "prioridad": "alta/media/baja"}},
+    {{"titulo": "...", "descripcion": "...", "prioridad": "..."}},
+    {{"titulo": "...", "descripcion": "...", "prioridad": "..."}},
+    {{"titulo": "...", "descripcion": "...", "prioridad": "..."}},
+    {{"titulo": "...", "descripcion": "...", "prioridad": "..."}}
+  ],
+  "acciones_inmediatas": [
+    "Acción concreta 1 que puedes implementar esta semana",
+    "Acción concreta 2",
+    "Acción concreta 3"
+  ],
+  "diferenciacion": "Cómo deberías posicionarte para destacar frente a este competidor en 2-3 frases",
+  "keywords_sin_cubrir": ["kw que el competidor no ataca bien", "....", "..."]
+}}
+
+Responde en español, sé muy específico con los datos reales de cada web."""
+
+    message = client.messages.create(
+        model="claude-opus-4-8",
+        max_tokens=4000,
+        thinking={"type": "adaptive"},
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    raw = ""
+    for block in message.content:
+        if block.type == "text":
+            raw = block.text
+            break
+
+    raw = re.sub(r"^```(?:json)?\s*", "", raw.strip())
+    raw = re.sub(r"\s*```$", "", raw.strip())
+    return json.loads(raw)
+
+
 def generate_report(api_key: str, scraped: dict) -> dict:
     client = anthropic.Anthropic(api_key=api_key)
     prompt = _build_prompt(scraped)

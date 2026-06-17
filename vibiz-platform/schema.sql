@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     stripe_customer_id TEXT,
     stripe_subscription_id TEXT,
     analyses_used INTEGER NOT NULL DEFAULT 0,
+    webhook_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

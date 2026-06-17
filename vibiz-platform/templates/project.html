@@ -99,6 +99,7 @@
   <aside class="sidebar">
     <a href="{{ url_for('dashboard') }}" class="sidebar-link">📊 Dashboard</a>
     <a href="{{ url_for('analyze') }}" class="sidebar-link">⚡ Nuevo análisis</a>
+    {% if user.plan == 'pro' %}<a href="{{ url_for('compare') }}" class="sidebar-link">⚔️ Competencia</a>{% endif %}
     <a href="{{ url_for('settings') }}" class="sidebar-link">⚙️ Cuenta</a>
   </aside>
 
@@ -109,7 +110,11 @@
         <div class="page-title">{{ project.title }}</div>
         <div class="page-sub">🔗 {{ project.url }} · {{ project.created_at[:10] }}</div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="{{ url_for('export_project', project_id=project.id) }}" class="btn btn-ghost btn-sm">⬇ Descargar ZIP</a>
+        {% if user.plan == 'pro' %}
+        <a href="{{ url_for('download_landing', project_id=project.id) }}" class="btn btn-ghost btn-sm">🏠 Landing HTML</a>
+        {% endif %}
         <a href="{{ url_for('analyze') }}" class="btn btn-ghost btn-sm">+ Nuevo análisis</a>
         <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-sm">← Dashboard</a>
       </div>
